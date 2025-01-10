@@ -16,5 +16,5 @@ Example for HR_Management: Lembur flow in the duration option:
 
 Example for dummy flow in the due date option:
 
-![Screenshot of the app](public/img//dudate.png)
+![Screenshot of the app](public/img/duedate.jpeg)
 
