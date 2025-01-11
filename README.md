@@ -1,4 +1,4 @@
-## real code
+## original code
 https://github.com/SnoopyoFifi/bpmn-react
 
 ## heatmap integration into bpmn
