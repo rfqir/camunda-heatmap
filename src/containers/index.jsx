@@ -1,3 +1,4 @@
+/* eslint-disable */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { message } from 'antd';
@@ -40,16 +41,36 @@ export default class Bpmn extends Component {
       ]
     });
     const { diagramXML, heatmapdata } = this.props;
+    
     // console.log('this.props： ', this.props);
     this.openDiagram(diagramXML, heatmapdata);
-  }
 
+    const eventBus = this.bpmnModeler.get('eventBus');
+
+    eventBus.on('element.click', (event) => {
+      const element = event.element;
+      
+      if (element.type === 'bpmn:SubProcess' && element.collapsed) {
+        this.expandSubProcess(element);
+      }
+    });
+
+  }
+  componentDidUpdate(prevProps) {
+    if (String(prevProps.diagramXML) != String(this.props.diagramXML)) {
+      this.openDiagram(this.props.diagramXML, this.props.heatmapdata);
+    }else{
+      console.log('gk dapet'); 
+    }
+  }
   // create
   openDiagram = (xml, heatmapdata) => {
+    
     this.bpmnModeler.importXML(xml, (err) => {
       if (err) {
         // console.log('err: ', err);
-        message.error('模型加载有误！');
+        console.error("Error during XML import:", err);
+        message.error('Model loading error!');
       } else {
         const canvas = this.bpmnModeler.get('canvas');
         canvas.zoom('fit-viewport');
@@ -70,6 +91,31 @@ export default class Bpmn extends Component {
       }
     });
   }
+  expandSubProcess = async (subProcessId) => {
+    return new Promise((resolve) => {
+      this.bpmnModeler.saveXML({ format: true }, (err, xml) => {
+        if (err) {
+          console.error('Error saving XML:', err);
+          resolve(null);
+          return;
+        }
+  
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(xml, 'text/xml');
+  
+        const subProcessElement = xmlDoc.querySelector(`[id="${subProcessId.id}"]`);
+        if (subProcessElement) {
+          subProcessElement.setAttribute('isCollapsed', 'false');
+          const serializer = new XMLSerializer();
+          const resolver = resolve(serializer.serializeToString(xmlDoc));
+          // this.openDiagram(diagramXML, this.props.heatmapdata);
+        } else {
+          console.error('Subprocess not found:', subProcessId);
+          resolve(null);
+        }
+      });
+    });
+  };
 
   // render heatmap
   renderHeatmap = (canvas) => {
@@ -95,7 +141,7 @@ export default class Bpmn extends Component {
     const connections = elementRegistry.filter((element) => {
       return !!element.waypoints && element.parent;
     });
-    console.log('viewbox: ', viewbox);
+    // console.log('viewbox: ', viewbox);
     const shapePoints = [];
     shapes.forEach((shape) => {
       const { x, y, width: w, height: h, type, id } = shape;
